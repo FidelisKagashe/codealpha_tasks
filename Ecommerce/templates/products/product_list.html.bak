@@ -1,0 +1,121 @@
+{% extends "users/home.html" %}
+
+{% load static %}
+{% load custom_filters %}
+
+{% block header %}
+Hazina ya Vitabu - {% if category_name %}{{ category_name }}{% else %}Vitabu Vyote{% endif %}{% if subcategory_name %} · {{ subcategory_name }}{% endif %}
+{% endblock %}
+
+{% block main_block %}
+<section class="bg-gradient-to-r from-blue-50 to-blue-100 py-10 border-b border-blue-200">
+    <div class="max-w-5xl mx-auto px-4 text-center space-y-3">
+        <p class="uppercase tracking-widest text-sm text-blue-500 font-semibold">Hazina ya Vitabu</p>
+        <h1 class="text-3xl md:text-4xl font-extrabold text-blue-900">
+            {% if subcategory_name %}
+                {{ subcategory_name }}
+            {% elif category_name %}
+                {{ category_name }}
+            {% else %}
+                Vitabu vyote vilivyopo dukani
+            {% endif %}
+        </h1>
+        <p class="text-base md:text-lg text-blue-800 max-w-3xl mx-auto">
+            Chunguza machapisho ya Kikristo ya kukuza ukuaji wa kiroho, kifamilia na kijamii. Tumia vichujio kubainisha kile unachohitaji haraka.
+        </p>
+    </div>
+</section>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    {% if subcategories %}
+    <div class="bg-white shadow-sm rounded-xl border border-blue-100 p-5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h2 class="text-lg font-semibold text-blue-900">Machaguzi</h2>
+                <p class="text-sm text-blue-700">Chagua tawi la vitabu ili kubana matokeo.</p>
+            </div>
+        </div>
+        <div class="mt-4 flex flex-wrap gap-2">
+            {% for subcategory in subcategories %}
+                <a href="{% url 'products_by_subcategory' subcategory.name %}"
+                   class="px-4 py-2 rounded-full text-sm font-medium border transition duration-200 {% if active_subcategory == subcategory.name %}bg-blue-600 text-white border-blue-600 shadow{% else %}border-blue-200 text-blue-700 hover:bg-blue-50{% endif %}"
+                   aria-current="{% if active_subcategory == subcategory.name %}true{% else %}false{% endif %}">
+                    {{ subcategory.name }}
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="bg-white shadow-sm rounded-xl border border-blue-100 p-6">
+        <form method="GET" action="" class="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 md:items-end">
+            <div>
+                <label for="product_name" class="block text-sm font-semibold text-blue-900 mb-1">Tafuta kitabu</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-400">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" name="product_name" id="product_name" value="{{ product_name }}"
+                           class="w-full pl-10 pr-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                           placeholder="Andika jina la kitabu au mwandishi">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-[auto_auto] gap-3">
+                <div>
+                    <label for="price_range" class="block text-sm font-semibold text-blue-900 mb-1">Chuja kwa bei</label>
+                    <select name="price_range" id="price_range"
+                            class="w-full md:w-52 px-3 py-2 border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Bei zote</option>
+                        {% for key, price_range in price_ranges.items %}
+                            <option value="{{ key }}" {% if price_range_key == key %}selected{% endif %}>{{ price_range.label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="flex items-end gap-2">
+                    <button type="submit"
+                            class="inline-flex items-center justify-center px-5 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg shadow hover:bg-blue-500 transition">
+                        <i class="bi bi-funnel-fill mr-2"></i>
+                        Tumia vichujio
+                    </button>
+                    {% if product_name or price_range_key %}
+                        <a href="{% url 'shop' %}"
+                           class="inline-flex items-center justify-center px-4 py-2 border border-blue-200 text-blue-700 text-sm font-semibold rounded-lg hover:bg-blue-50 transition">
+                            Weka upya
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {% for product in products %}
+            <article class="bg-white rounded-2xl border border-blue-100 shadow-sm hover:shadow-lg transition flex flex-col overflow-hidden">
+                <div class="bg-blue-50 flex justify-center items-center h-56">
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="max-h-52 object-contain">
+                </div>
+                <div class="p-5 flex flex-col space-y-3 flex-1">
+                    <div>
+                        <p class="text-xs uppercase tracking-wider text-blue-400 font-semibold">{{ product.category.name }}</p>
+                        <h2 class="text-lg font-semibold text-blue-900 leading-tight">{{ product.name }}</h2>
+                    </div>
+                    <p class="text-blue-700 font-bold text-xl">{{ product.price|format_currency }}</p>
+                    <div class="mt-auto">
+                        <a href="{% url 'product_detail' product.pk %}"
+                           class="inline-flex items-center justify-center w-full px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-500 transition">
+                            Tazama zaidi
+                        </a>
+                    </div>
+                </div>
+            </article>
+        {% empty %}
+            <div class="col-span-full bg-blue-50 border border-dashed border-blue-200 rounded-2xl p-10 text-center">
+                <p class="text-lg font-semibold text-blue-900">Hakuna vitabu vilivyopatikana kwa vigezo hivi.</p>
+                <p class="text-sm text-blue-700 mt-2">Jaribu kubadilisha vichujio au <a href="{% url 'home' %}" class="font-semibold underline">rudi ukurasa mkuu</a>.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,228 @@
+{% extends "users/home.html" %}
+{% load static %}
+{% load custom_filters %}
+{% load i18n %}
+
+{% block header %}
+{% trans "Hazina ya Vitabu - Place Order" %}
+{% endblock %}
+
+{% block main_block %}
+<div class="text-center {% if theme == 'dark' %}bg-gray-800{% else %}bg-blue-100{% endif %} py-3 mt-2 border-b-2 {% if theme == 'dark' %}border-gray-700{% else %}border-blue-700{% endif %}">
+    <h1 class="text-2xl font-bold {% if theme == 'dark' %}text-gray-100{% else %}text-blue-800{% endif %}">
+        {% trans "Place Order" %}
+    </h1>
+</div>
+
+<div class="bg-white m-6 p-6 rounded-lg shadow-md w-full max-w-lg mx-auto">
+    <!-- Cart items display -->
+    <ul class="space-y-4">
+        {% for item in cart_items %}
+            <li class="flex justify-between items-center border-b pb-2">
+                <span class="flex items-center">
+                    {% if item.product.image %}
+                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="h-12 w-12 mr-4 rounded">
+                    {% else %}
+                        <div class="h-12 w-12 mr-4 rounded bg-gray-200"></div>
+                    {% endif %}
+                    <div>
+                        <p>{{ item.product.name }}</p>
+                        <p class="text-sm text-gray-600">
+                            {{ item.product.price|format_currency }} x {{ item.quantity }} =
+                            <strong>{{ item.total_price|format_currency }}</strong>
+                        </p>
+                    </div>
+                </span>
+            </li>
+        {% empty %}
+            <li class="text-gray-500 text-center">{% trans "Your cart is empty." %}</li>
+        {% endfor %}
+    </ul>
+
+    <!-- Total summary -->
+    {% if cart_items %}
+    <div class="font-bold border-b border-gray-400 pb-3 text-lg mt-4 text-right">
+        {% trans "Total:" %} {{ total_sum|format_currency }}
+    </div>
+    {% endif %}
+
+    <!-- Place Order form -->
+    {% if cart_items %}
+    <div class="mt-6">
+        <h2 class="text-xl text-center font-semibold {% if theme == 'dark' %}text-gray-100{% else %}text-blue-800{% endif %} mb-4">{% trans "Enter your information" %}</h2>
+
+        <form id="placeOrderForm" method="POST" action="{% url 'place_order' %}" class="space-y-4">
+            {% csrf_token %}
+            {% if error_message %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4">
+                {{ error_message }}
+            </div>
+            {% endif %}
+
+            {% if not user.is_authenticated %}
+            <!-- Name -->
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700">{% trans "Name:" %}</label>
+                <input type="text" id="name" name="name" class="mt-1 p-2 border {% if theme == 'dark' %}border-gray-700 bg-gray-900 text-gray-100{% else %}border-gray-300 bg-white text-gray-900{% endif %} rounded w-full focus:outline-none focus:border-blue-500" placeholder="{% trans "E.g., John Doe" %}" required>
+                {% if form.name.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.name.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Address -->
+            <div>
+                <label for="address" class="block text-sm font-medium text-gray-700">{% trans "Address:" %}</label>
+                <input type="text" id="address" name="address" class="mt-1 p-2 border {% if theme == 'dark' %}border-gray-700 bg-gray-900 text-gray-100{% else %}border-gray-300 bg-white text-gray-900{% endif %} rounded w-full focus:outline-none focus:border-blue-500" placeholder="{% trans "E.g., Dodoma, UDOM, CIVE, 1A-S39" %}" required>
+                {% if form.address.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.address.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Email -->
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">{% trans "Email Address:" %}</label>
+                <input type="email" id="email" name="email" class="mt-1 p-2 border {% if theme == 'dark' %}border-gray-700 bg-gray-900 text-gray-100{% else %}border-gray-300 bg-white text-gray-900{% endif %} rounded w-full focus:outline-none focus:border-blue-500" placeholder="{% trans "E.g., example@gmail.com" %}" required>
+                {% if form.email.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.email.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Phone -->
+            <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700">{% trans "Phone Number:" %}</label>
+                <input type="tel" id="phone" name="phone" class="mt-1 p-2 border {% if theme == 'dark' %}border-gray-700 bg-gray-900 text-gray-100{% else %}border-gray-300 bg-white text-gray-900{% endif %} rounded w-full focus:outline-none focus:border-blue-500" placeholder="{% trans "E.g., +255711223344" %}" required oninput="validatePhoneNumber(event)">
+                {% if form.phone.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.phone.errors.0 }}</p>
+                {% endif %}
+            </div>
+            {% else %}
+            <!-- Authenticated user info -->
+            <div class="bg-blue-50 p-4 rounded-lg mb-4">
+                <h3 class="text-lg font-semibold {% if theme == 'dark' %}text-gray-100{% else %}text-blue-800{% endif %} mb-2">{% trans "Your account information:" %}</h3>
+                <p><strong>{% trans "Name:" %}</strong> {{ user.first_name }} {{ user.last_name }}</p>
+                <p><strong>{% trans "Email:" %}</strong> {{ user.email }}</p>
+                {% if user_profile %}
+                <p><strong>{% trans "Phone number:" %}</strong> {{ user_profile.phone_number }}</p>
+                {% endif %}
+                <p class="text-sm text-blue-600 mt-2">
+                    <a href="{% url 'profile' %}" class="underline">{% trans "Change your details here" %}</a>
+                </p>
+            </div>
+
+            <input type="hidden" name="name" value="{{ user.first_name }} {{ user.last_name }}">
+            <input type="hidden" name="email" value="{{ user.email }}">
+            {% if user_profile %}
+            <input type="hidden" name="phone" value="{{ user_profile.phone_number }}">
+            {% endif %}
+
+            <!-- Show address field for authenticated users -->
+            <div>
+                <label for="address" class="block text-sm font-medium text-gray-700">{% trans "Delivery address:" %}</label>
+                <input type="text" id="address" name="address" class="mt-1 p-2 border {% if theme == 'dark' %}border-gray-700 bg-gray-900 text-gray-100{% else %}border-gray-300 bg-white text-gray-900{% endif %} rounded w-full focus:outline-none focus:border-blue-500" placeholder="{% trans "E.g., Dodoma, UDOM, CIVE, 1A-S39" %}" required>
+            </div>
+            {% endif %}
+
+            <!-- Submit button -->
+            <button type="submit" class="w-full {% if theme == 'dark' %}bg-blue-600 text-white hover:bg-blue-500{% else %}bg-blue-600 text-white hover:bg-blue-500{% endif %} py-2 rounded transition duration-200">
+                {% trans "Place Order" %}
+            </button>
+        </form>
+    </div>
+
+    {% else %}
+    <div class="mt-6 text-center">
+        <a href="{% url 'home' %}" class="{% if theme == 'dark' %}bg-blue-600 text-white hover:bg-blue-500{% else %}bg-blue-600 text-white hover:bg-blue-500{% endif %} py-2 px-4 rounded">
+            {% trans "Continue Shopping" %}
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // localized messages for JS validation
+    const MSG_LENGTH = "{% trans 'Phone number must be exactly 13 digits long.' %}";
+    const MSG_PREFIX = "{% trans 'Phone number must start with +2556 or +2557.' %}";
+    const MSG_DIGITS = "{% trans 'Phone number must only contain digits and the+ sign.' %}";
+    const MSG_INVALID = "{% trans 'Please ensure the phone number is formatted correctly.' %}";
+    const MSG_GENERIC = "{% trans 'An error occurred. Please try again.' %}";
+
+    function validatePhoneNumber(event) {
+        const inputField = event.target;
+        let phoneNumber = inputField.value.trim();
+
+        // Remove invalid chars (keep digits and '+')
+        phoneNumber = phoneNumber.replace(/[^0-9+]/g, '');
+
+        // If starts with '0' convert to +255...
+        if (phoneNumber.startsWith('0')) {
+            phoneNumber = '+255' + phoneNumber.slice(1);
+        }
+
+        // If starts with 6 or 7 and missing +255, prepend it
+        if ((phoneNumber.startsWith('6') || phoneNumber.startsWith('7')) && !phoneNumber.startsWith('+255')) {
+            phoneNumber = '+255' + phoneNumber;
+        }
+
+        // Remove extra 0 after +255 if present
+        if (phoneNumber.startsWith('+2550')) {
+            phoneNumber = '+255' + phoneNumber.slice(4);
+        }
+
+        // Limit to 13 characters
+        if (phoneNumber.length > 13) {
+            phoneNumber = phoneNumber.slice(0, 13);
+        }
+
+        // Set validation classes and messages
+        if (phoneNumber.length === 13) {
+            if (phoneNumber.startsWith('+2556') || phoneNumber.startsWith('+2557')) {
+                inputField.classList.remove('border-red-500');
+                inputField.setCustomValidity('');
+            } else {
+                inputField.classList.add('border-red-500');
+                inputField.setCustomValidity(MSG_PREFIX);
+            }
+        } else {
+            inputField.classList.add('border-red-500');
+            inputField.setCustomValidity(MSG_LENGTH);
+        }
+
+        inputField.value = phoneNumber;
+    }
+
+    // Attach submit validation safely (only if form exists)
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('placeOrderForm');
+        if (!form) return;
+
+        form.addEventListener('submit', function (event) {
+            const phoneField = document.getElementById('phone');
+            if (!phoneField) return;
+            const phone = phoneField.value.trim();
+            let isValid = true;
+
+            if (phone.length !== 13) {
+                isValid = false;
+                phoneField.classList.add('border-red-500');
+                alert(MSG_LENGTH);
+            } else if (!phone.startsWith('+2556') && !phone.startsWith('+2557')) {
+                isValid = false;
+                phoneField.classList.add('border-red-500');
+                alert(MSG_PREFIX);
+            } else if (/[^0-9+]/.test(phone)) {
+                isValid = false;
+                phoneField.classList.add('border-red-500');
+                alert(MSG_DIGITS);
+            } else {
+                phoneField.classList.remove('border-red-500');
+            }
+
+            if (!isValid) {
+                event.preventDefault();
+                alert(MSG_INVALID);
+            }
+        });
+    });
+</script>
+
+{% endblock %}
