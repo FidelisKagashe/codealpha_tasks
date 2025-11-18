@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Profile - Social Media{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <h2 class="text-2xl font-bold mb-6">Edit Profile</h2>
+
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ u_form.username.id_for_label }}" class="block text-sm font-medium mb-2">Username</label>
+                    {{ u_form.username }}
+                </div>
+
+                <div>
+                    <label for="{{ u_form.email.id_for_label }}" class="block text-sm font-medium mb-2">Email</label>
+                    {{ u_form.email }}
+                </div>
+
+                <div>
+                    <label for="{{ u_form.first_name.id_for_label }}" class="block text-sm font-medium mb-2">First Name</label>
+                    {{ u_form.first_name }}
+                </div>
+
+                <div>
+                    <label for="{{ u_form.last_name.id_for_label }}" class="block text-sm font-medium mb-2">Last Name</label>
+                    {{ u_form.last_name }}
+                </div>
+            </div>
+
+            <div>
+                <label for="{{ p_form.bio.id_for_label }}" class="block text-sm font-medium mb-2">Bio</label>
+                {{ p_form.bio }}
+            </div>
+
+            <div>
+                <label for="{{ p_form.location.id_for_label }}" class="block text-sm font-medium mb-2">Location</label>
+                {{ p_form.location }}
+            </div>
+
+            <div>
+                <label for="{{ p_form.website.id_for_label }}" class="block text-sm font-medium mb-2">Website</label>
+                {{ p_form.website }}
+            </div>
+
+            <div>
+                <label for="{{ p_form.profile_picture.id_for_label }}" class="block text-sm font-medium mb-2">Profile Picture</label>
+                {% if user.profile.profile_picture %}
+                <div class="mb-3">
+                    <img src="{{ user.profile.profile_picture.url }}" alt="Current profile picture" class="w-24 h-24 rounded-full object-cover">
+                </div>
+                {% endif %}
+                {{ p_form.profile_picture }}
+            </div>
+
+            <div class="flex space-x-4">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-md transition">
+                    Save Changes
+                </button>
+                <a href="{% url 'profile' user.username %}" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-medium px-6 py-2 rounded-md transition">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    input[type="text"],
+    input[type="email"],
+    input[type="url"],
+    textarea {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        background-color: white;
+        color: #1f2937;
+    }
+
+    .dark input[type="text"],
+    .dark input[type="email"],
+    .dark input[type="url"],
+    .dark textarea {
+        background-color: #374151;
+        border-color: #4b5563;
+        color: white;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="url"]:focus,
+    textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        ring: 2px;
+        ring-color: #3b82f6;
+    }
+</style>
+{% endblock %}
